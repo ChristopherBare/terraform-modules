@@ -92,3 +92,9 @@ resource "aws_iam_role" "cloudfront_role" {
     }]
   })
 }
+
+
+resource "aws_iam_role_policy_attachment" "attach_role_policy" {
+  role       = aws_iam_role.cloudfront_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+}
