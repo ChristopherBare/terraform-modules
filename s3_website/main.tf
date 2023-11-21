@@ -30,10 +30,10 @@ resource "aws_cloudfront_distribution" "website_distribution" {
     target_origin_id       = var.origin_id
     viewer_protocol_policy = "redirect-to-https"
     forwarded_values {
-      query_string = false
+      query_string = true
 
       cookies {
-        forward = "none"
+        forward = "all"
       }
     }
   }
@@ -76,20 +76,20 @@ resource "aws_iam_policy" "s3_bucket_policy" {
 resource "aws_iam_policy_attachment" "bucket_policy_attachment" {
   name       = "s3_bucket_policy_attachment"
   policy_arn = aws_iam_policy.s3_bucket_policy.arn
-  roles = [aws_iam_role.cloudfront_role.id]
+  roles      = [aws_iam_role.cloudfront_role.id]
 }
 
 resource "aws_iam_role" "cloudfront_role" {
-  name = "cloudfront_role"  # Replace with a meaningful role name
+  name = "cloudfront_role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
     Statement = [{
-      Effect    = "Allow",
+      Effect = "Allow",
       Principal = {
-        Service = "cloudfront.amazonaws.com"  # CloudFront service principal
+        Service = "cloudfront.amazonaws.com"
       },
-      Action    = "sts:AssumeRole"
+      Action = "sts:AssumeRole"
     }]
   })
 }
