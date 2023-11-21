@@ -5,8 +5,8 @@ resource "aws_s3_bucket" "website_bucket" {
 resource "aws_s3_bucket_website_configuration" "website_config" {
   bucket = aws_s3_bucket.website_bucket.bucket
 
-  index_document = var.index_document
-  error_document = var.error_document
+  index_document {suffix = var.index_document}
+  error_document {key = var.error_document }
 }
 
 resource "aws_cloudfront_distribution" "website_distribution" {
