@@ -53,20 +53,24 @@ resource "aws_cloudfront_origin_access_identity" "website_access_identity" {
   comment = "Access identity for the website S3 bucket"
 }
 
-data "aws_iam_policy_document" "bucket_policy" {
-  statement {
-    actions   = ["s3:GetObject"]
-    resources = [aws_s3_bucket.website_bucket.arn]
-    condition {
-      test     = "StringLike"
-      variable = "aws:UserAgent"
+data "aws_iam_policy_document" "s3_policy" {
+  version = "2012-10-17"
+  id      = "AllowGetObjects"
 
-      values = ["*CloudFront*"]
+  statement {
+    sid       = "AllowPublic"
+    effect    = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
     }
+    actions   = ["s3:GetObject"]
+    resources = [aws_s3_bucket.website_bucket.arn + "/*"]
   }
 }
+
 resource "aws_s3_bucket_policy" "bucket_policy"{
   bucket = aws_s3_bucket.website_bucket.id
-  policy = data.aws_iam_policy_document.bucket_policy
+  policy = data.aws_iam_policy_document.s3_policy
 }
 
