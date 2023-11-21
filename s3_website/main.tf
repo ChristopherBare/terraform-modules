@@ -51,3 +51,30 @@ resource "aws_cloudfront_distribution" "website_distribution" {
 resource "aws_cloudfront_origin_access_identity" "website_access_identity" {
   comment = "Access identity for the website S3 bucket"
 }
+
+resource "aws_s3_bucket_policy" "website_bucket_policy" {
+  bucket = aws_s3_bucket.website_bucket.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Sid       = "GrantCloudFrontAccess",
+        Effect    = "Allow",
+        Principal = {
+          AWS = "*"
+        },
+        Action    = "s3:GetObject",
+        Resource  = "${aws_s3_bucket.website_bucket.arn}/*",
+        Condition = {
+          StringLike = {
+            "aws:Referer": [
+              "http://${aws_cloudfront_distribution.website_distribution.domain_name}/*",
+              "https://${aws_cloudfront_distribution.website_distribution.domain_name}/*"
+            ]
+          }
+        }
+      }
+    ]
+  })
+}
