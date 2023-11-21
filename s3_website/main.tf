@@ -55,7 +55,7 @@ resource "aws_cloudfront_origin_access_identity" "website_access_identity" {
 
 resource "aws_s3_bucket_policy" "website_bucket_policy" {
   depends_on = [aws_s3_bucket.website_bucket]
-  bucket     = aws_s3_bucket.website_bucket.arn
+  bucket     = aws_s3_bucket.website_bucket.id
 
   policy = jsonencode({
     Version = "2012-10-17",
