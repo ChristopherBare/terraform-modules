@@ -51,7 +51,6 @@ resource "aws_cloudfront_distribution" "website_distribution" {
 
 resource "aws_cloudfront_origin_access_identity" "website_access_identity" {
   comment = "Access identity for the website S3 bucket"
-  policy_arn = aws_iam_policy.s3_bucket_policy.arn
 }
 
 data "aws_iam_policy_document" "bucket_policy" {
@@ -80,3 +79,23 @@ resource "aws_iam_policy" "s3_bucket_policy" {
   policy = data.aws_iam_policy_document.bucket_policy.json
 }
 
+resource "aws_iam_policy_attachment" "bucket_policy_attachment" {
+  name       = "s3_bucket_policy_attachment"
+  policy_arn = aws_iam_policy.s3_bucket_policy.arn
+  roles = [aws_iam_role.cloudfront_role.id]
+}
+
+resource "aws_iam_role" "cloudfront_role" {
+  name = "cloudfront_role"  # Replace with a meaningful role name
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Effect    = "Allow",
+      Principal = {
+        Service = "cloudfront.amazonaws.com"  # CloudFront service principal
+      },
+      Action    = "sts:AssumeRole"
+    }]
+  })
+}
