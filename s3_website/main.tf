@@ -15,7 +15,7 @@ resource "aws_cloudfront_distribution" "website_distribution" {
   default_root_object = var.index_document
 
   origin {
-    domain_name = aws_s3_bucket_website_configuration.website_config.website_domain
+    domain_name = aws_s3_bucket_website_configuration.website_config.bucket
     origin_id   = var.origin_id
 
     s3_origin_config {
