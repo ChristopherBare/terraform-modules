@@ -85,7 +85,9 @@ resource "aws_iam_role" "cloudfront_role" {
     Version = "2012-10-17",
     Statement = [{
       Effect = "Allow",
-      Principal = "*",
+      Principal = {
+        Service = "cloudfront.amazonaws.com"
+      },
       Action = "sts:AssumeRole"
     }]
   })
