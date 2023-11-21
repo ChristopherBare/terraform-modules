@@ -3,6 +3,14 @@ resource "aws_s3_bucket" "website_bucket" {
   force_destroy = true
 }
 
+resource "aws_s3_account_public_access_block" "access_block"{
+  bucket = aws_s3_bucket.website_bucket.id
+  block_public_acls = true
+  block_public_policy = true
+  ignore_public_acls = true
+  restrict_public_buckets = true
+}
+
 resource "aws_s3_bucket_website_configuration" "website_config" {
   bucket = aws_s3_bucket.website_bucket.bucket
 
@@ -57,6 +65,10 @@ data "aws_iam_policy_document" "bucket_policy" {
   statement {
     actions   = ["s3:*"]
     resources = [aws_s3_bucket.website_bucket.arn]
+    principals {
+      identifiers = [aws_cloudfront_origin_access_identity.website_access_identity.iam_arn]
+      type        = "AWS"
+    }
 #    condition {
 #      test     = "S"
 #      variable = "aws:Referer"
