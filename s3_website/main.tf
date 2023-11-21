@@ -57,15 +57,6 @@ data "aws_iam_policy_document" "bucket_policy" {
   statement {
     actions   = ["s3:*"]
     resources = [aws_s3_bucket.website_bucket.arn]
-    principals {
-      identifiers = [aws_cloudfront_origin_access_identity.website_access_identity.iam_arn]
-      type        = "AWS"
-    }
-#    condition {
-#      test     = "S"
-#      variable = "aws:Referer"
-#      values = []
-#    }
   }
 }
 
