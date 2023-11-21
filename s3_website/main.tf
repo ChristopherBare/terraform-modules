@@ -1,13 +1,13 @@
 resource "aws_s3_bucket" "website_bucket" {
-  bucket = var.website_bucket_name
+  bucket        = var.website_bucket_name
   force_destroy = true
 }
 
 resource "aws_s3_bucket_website_configuration" "website_config" {
   bucket = aws_s3_bucket.website_bucket.bucket
 
-  index_document {suffix = var.index_document}
-  error_document {key = var.error_document }
+  index_document { suffix = var.index_document }
+  error_document { key = var.error_document }
 }
 
 resource "aws_cloudfront_distribution" "website_distribution" {
@@ -54,22 +54,23 @@ resource "aws_cloudfront_origin_access_identity" "website_access_identity" {
 }
 
 resource "aws_s3_bucket_policy" "website_bucket_policy" {
-  bucket = aws_s3_bucket.website_bucket.arn
+  depends_on = [aws_s3_bucket.website_bucket]
+  bucket     = aws_s3_bucket.website_bucket.arn
 
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
       {
-        Sid       = "GrantCloudFrontAccess",
-        Effect    = "Allow",
+        Sid    = "GrantCloudFrontAccess",
+        Effect = "Allow",
         Principal = {
           AWS = "*"
         },
-        Action    = "s3:GetObject",
-        Resource  = "${aws_s3_bucket.website_bucket.arn}/*",
+        Action   = "s3:GetObject",
+        Resource = "${aws_s3_bucket.website_bucket.arn}/*",
         Condition = {
           StringLike = {
-            "aws:Referer": [
+            "aws:Referer" : [
               "http://${aws_cloudfront_distribution.website_distribution.domain_name}/*",
               "https://${aws_cloudfront_distribution.website_distribution.domain_name}/*"
             ]
