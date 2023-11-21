@@ -65,31 +65,8 @@ data "aws_iam_policy_document" "bucket_policy" {
     }
   }
 }
-
-resource "aws_iam_policy" "s3_bucket_policy" {
-  name        = "CloudFrontS3BucketPolicy"
-  description = "Policy to grant CloudFront access to S3 bucket"
-
-  policy = data.aws_iam_policy_document.bucket_policy.json
+resource "aws_s3_bucket_policy" "bucket_policy"{
+  bucket = aws_s3_bucket.website_bucket.id
+  policy = data.aws_iam_policy_document.bucket_policy
 }
 
-resource "aws_iam_policy_attachment" "bucket_policy_attachment" {
-  name       = "s3_bucket_policy_attachment"
-  policy_arn = aws_iam_policy.s3_bucket_policy.arn
-  roles      = [aws_iam_role.cloudfront_role.id]
-}
-
-resource "aws_iam_role" "cloudfront_role" {
-  name = "cloudfront_role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [{
-      Effect = "Allow",
-      Principal = {
-        Service = "cloudfront.amazonaws.com"
-      },
-      Action = "sts:AssumeRole"
-    }]
-  })
-}
