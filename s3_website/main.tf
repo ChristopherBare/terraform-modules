@@ -51,32 +51,32 @@ resource "aws_cloudfront_distribution" "website_distribution" {
 
 resource "aws_cloudfront_origin_access_identity" "website_access_identity" {
   comment = "Access identity for the website S3 bucket"
+  policy_arn = aws_iam_policy.s3_bucket_policy.arn
 }
 
-resource "aws_s3_bucket_policy" "website_bucket_policy" {
-  depends_on = [aws_s3_bucket.website_bucket]
-  bucket     = aws_s3_bucket.website_bucket.id
+data "aws_iam_policy_document" "bucket_policy" {
+  statement {
+    actions   = ["s3:GetObject"]
+    resources = [aws_s3_bucket.website_bucket.arn]
 
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Sid    = "GrantCloudFrontAccess",
-        Effect = "Allow",
-        Principal = {
-          AWS = "*"
-        },
-        Action   = "s3:GetObject",
-        Resource = "${aws_s3_bucket.website_bucket.arn}/*",
-        Condition = {
-          StringLike = {
-            "aws:Referer" : [
-              "http://${aws_cloudfront_distribution.website_distribution.domain_name}/*",
-              "https://${aws_cloudfront_distribution.website_distribution.domain_name}/*"
-            ]
-          }
-        }
-      }
-    ]
-  })
+    principals {
+      type        = "AWS"
+      identifiers = [aws_cloudfront_origin_access_identity.website_access_identity.iam_arn]
+    }
+
+    condition {
+      test     = "StringLike"
+      variable = "aws:UserAgent"
+
+      values = ["*CloudFront*"]
+    }
+  }
 }
+
+resource "aws_iam_policy" "s3_bucket_policy" {
+  name        = "CloudFrontS3BucketPolicy"
+  description = "Policy to grant CloudFront access to S3 bucket"
+
+  policy = data.aws_iam_policy_document.bucket_policy.json
+}
+
