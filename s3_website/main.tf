@@ -3,13 +3,6 @@ resource "aws_s3_bucket" "website_bucket" {
   force_destroy = true
 }
 
-resource "aws_s3_bucket_website_configuration" "website_config" {
-  bucket = aws_s3_bucket.website_bucket.bucket
-
-  index_document { suffix = var.index_document }
-  error_document { key = var.error_document }
-}
-
 resource "aws_cloudfront_distribution" "website_distribution" {
   enabled             = true
   is_ipv6_enabled     = true
@@ -19,8 +12,11 @@ resource "aws_cloudfront_distribution" "website_distribution" {
     domain_name = aws_s3_bucket.website_bucket.bucket_regional_domain_name
     origin_id   = var.origin_id
 
-    s3_origin_config {
-      origin_access_identity = aws_cloudfront_origin_access_identity.website_access_identity.cloudfront_access_identity_path
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
     }
   }
 
@@ -47,10 +43,6 @@ resource "aws_cloudfront_distribution" "website_distribution" {
   viewer_certificate {
     cloudfront_default_certificate = true
   }
-}
-
-resource "aws_cloudfront_origin_access_identity" "website_access_identity" {
-  comment = "Access identity for the website S3 bucket"
 }
 
 data "aws_iam_policy_document" "bucket_policy" {
