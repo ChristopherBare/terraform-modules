@@ -38,6 +38,7 @@ resource "aws_cloudfront_distribution" "website_distribution" {
     geo_restriction {
       restriction_type = "none"
     }
+    use_origin_access_identity = false
   }
 
   viewer_certificate {
