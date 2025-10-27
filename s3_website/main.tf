@@ -33,15 +33,15 @@ resource "aws_cloudfront_distribution" "website_distribution" {
   is_ipv6_enabled     = true
   default_root_object = var.index_document
 
-  # IMPORTANT: use the S3 *REST* endpoint for private bucket access
   origin {
+    # Use the S3 REST endpoint (regional) for private origins
     domain_name              = aws_s3_bucket.website_bucket.bucket_regional_domain_name
     origin_id                = var.origin_id
 
-    # With OAC, keep s3_origin_config (no OAI required)
-    s3_origin_config {}
+    # With OAC, keep s3_origin_config (no origin_access_identity!)
+    # s3_origin_config {}
 
-    # Attach the OAC created above
+    # Attach OAC
     origin_access_control_id = aws_cloudfront_origin_access_control.this.id
   }
 
@@ -51,19 +51,15 @@ resource "aws_cloudfront_distribution" "website_distribution" {
     target_origin_id       = var.origin_id
     viewer_protocol_policy = "redirect-to-https"
 
-    # You can migrate to cache_policy_id/origin_request_policy_id later.
+    # (You can migrate to cache_policy_id/origin_request_policy_id later)
     forwarded_values {
       query_string = true
-      cookies {
-        forward = "all"
-      }
+      cookies { forward = "all" }
     }
   }
 
   restrictions {
-    geo_restriction {
-      restriction_type = "none"
-    }
+    geo_restriction { restriction_type = "none" }
   }
 
   viewer_certificate {
@@ -74,13 +70,12 @@ resource "aws_cloudfront_distribution" "website_distribution" {
 ############################################
 # S3 BUCKET POLICY — ALLOW CLOUDFRONT VIA OAC
 ############################################
+data "aws_caller_identity" "current" {}
+
 data "aws_iam_policy_document" "bucket_policy" {
   statement {
-    sid = "AllowCloudFrontReadViaOAC"
-    actions = [
-      "s3:GetObject"
-    ]
-    # Grant only on objects, not the bucket root
+    sid     = "AllowCloudFrontReadViaOAC"
+    actions = ["s3:GetObject"]
     resources = ["${aws_s3_bucket.website_bucket.arn}/*"]
 
     principals {
@@ -88,11 +83,18 @@ data "aws_iam_policy_document" "bucket_policy" {
       identifiers = ["cloudfront.amazonaws.com"]
     }
 
-    # Limit access to only your distribution using OAC
+    # Confused-deputy protection
     condition {
       test     = "StringEquals"
       variable = "AWS:SourceArn"
       values   = [aws_cloudfront_distribution.website_distribution.arn]
+    }
+
+    # (Optional but recommended) also pin SourceAccount
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceAccount"
+      values   = [data.aws_caller_identity.current.account_id]
     }
   }
 }
@@ -101,8 +103,5 @@ resource "aws_s3_bucket_policy" "this" {
   bucket = aws_s3_bucket.website_bucket.id
   policy = data.aws_iam_policy_document.bucket_policy.json
 
-  # Ensure the bucket exists before we attach the policy
-  depends_on = [
-    aws_s3_bucket_public_access_block.this
-  ]
+  depends_on = [aws_s3_bucket_public_access_block.this]
 }
