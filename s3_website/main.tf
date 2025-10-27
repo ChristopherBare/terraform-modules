@@ -20,7 +20,7 @@ resource "aws_s3_bucket_public_access_block" "this" {
 resource "aws_cloudfront_origin_access_control" "this" {
   name                              = "${var.website_bucket_name}-oac"
   description                       = "OAC for private S3 origin ${var.website_bucket_name}"
-  origin_type                       = "s3"
+  origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
   signing_protocol                  = "sigv4"
 }
